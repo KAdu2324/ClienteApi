@@ -12,5 +12,10 @@
 
         public string Contato { get; set; } = String.Empty;
         public string Status { get; set; } = String.Empty;
+
+        internal void Remove(Cliente cliente)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
