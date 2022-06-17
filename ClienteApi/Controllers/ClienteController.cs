@@ -1,68 +1,81 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ClienteApi.Models;
+using ClienteApi.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClienteApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]")] //o cria o cliente
     [ApiController]
     public class ClienteController : ControllerBase
     {
 
-        private static List<Cliente> Cliente = new List<Cliente> ;
-           
+        private readonly ClienteServices _clienteServices;
+        public ClienteController(ClienteServices clienteServices)
+        {
+            _clienteServices = clienteServices;
+        }
 
         [HttpGet]//retorna lista toda de cliente
-        public async Task<ActionResult<List<Cliente>>> Get()
-        {
+        public async Task<List<Cliente>> GetClientes() =>
+             await _clienteServices.GetAsync();
 
-            return Ok(Cliente);
-        }
 
         [HttpGet("{id}")]// retorna apenas Id
-        public async Task<ActionResult<Cliente>> Get( int id)
-
+        public async Task<ActionResult<Cliente>> Get(string id)
         {
-            var cliente = Cliente.Find(h => h.Id == id);
-            if(cliente == null)
-                return BadRequest("Cliente não encontrado.");
-            return Ok(Cliente);
+            var cliente = await _clienteServices.GetAsync(id);
+
+            if (cliente is null)
+            {
+                return NotFound();
+            }
+
+            return cliente;
         }
-
         [HttpPost]// inserir minhas inoformações
-        public async Task<ActionResult<List<Cliente>>> AddCliente(Cliente cliente)
+        public async Task<IActionResult> Post(Cliente novoCliente)
         {
-            Cliente.Add(cliente); 
-            return Ok(Cliente);
+            await _clienteServices.CreateAsync(novoCliente);
+
+            return CreatedAtAction(nameof(Get), new { id = novoCliente.Id }, novoCliente);
+
         }
         [HttpPut]// Faz alteração
-        public async Task<ActionResult<List<Cliente>>> UpdateCliente(Cliente request)
+        public async Task<IActionResult> Update(string id, Cliente atualizarCliente)
         {
-            var cliente = Cliente.Find(h => h.Id == request.Id);
-            if (cliente == null)
-                return BadRequest("Cliente não encontrado.");
-            
-            cliente.Nome = request.Nome;
-            cliente.CPF = request.CPF;
-            cliente.Email = request.Email;
-            cliente.Endereço = request.Endereço;
-            cliente.Contato = request.Contato;
-            cliente.Status = request.Status;
+            var cliente = await _clienteServices.GetAsync(id);
 
+            if (cliente is null)
+            {
+                return NotFound();
+            }
 
-            return Ok(Cliente);
+            atualizarCliente.Id = cliente.Id;
+
+            await _clienteServices.UpdateAsync(id, atualizarCliente);
+
+            return NoContent();
         }
+
         [HttpDelete("{id}")] //esse apaga
-        public async Task<ActionResult<Cliente>> Delete(int id)
-
+        public async Task<IActionResult> Delete(string id)
         {
-            var cliente = Cliente.Find(h => h.Id == id);
-            if (cliente == null)
-                return BadRequest("Cliente não encontrado.");
+            var cliente = await _clienteServices.GetAsync(id);
 
-            cliente.Remove(cliente);
-            return Ok(Cliente);
+            if (cliente is null)
+            {
+                return NotFound();
+            }
+
+            await _clienteServices.RemoveAsync(id);
+
+            return NoContent();
         }
-
     }
 }
+
+
+
+
     
